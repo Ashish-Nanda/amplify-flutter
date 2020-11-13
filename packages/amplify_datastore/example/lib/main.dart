@@ -21,7 +21,7 @@ import 'dart:async';
 import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'package:amplify_datastore_plugin_interface/amplify_datastore_plugin_interface.dart';
-import 'amplifyconfiguration.dart';
+//import 'amplifyconfiguration.dart';
 
 import 'Post.dart';
 
@@ -60,7 +60,7 @@ class _MyAppState extends State<MyApp> {
         AmplifyDataStore(modelSchemas: [createTestSchema()]);
     await amplify.addPlugin(dataStorePlugins: [datastorePlugin]);
     // Configure
-    await amplify.configure(amplifyconfig);
+    await amplify.configure('''{}''');
     setState(() {
       _isAmplifyConfigured = true;
     });
