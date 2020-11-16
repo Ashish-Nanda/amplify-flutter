@@ -36,9 +36,12 @@ public class SwiftAmplifyDataStorePlugin: NSObject, FlutterPlugin {
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        print("in Handle")
         var arguments: [String: Any] = [:]
         do {
-            try arguments = checkArguments(args: call.arguments as Any)
+            if(call.arguments != nil) {
+                try arguments = checkArguments(args: call.arguments as Any)
+            }
         } catch {
             FlutterDataStoreErrorHandler.prepareError(
                 flutterResult: result,
@@ -56,6 +59,8 @@ public class SwiftAmplifyDataStorePlugin: NSObject, FlutterPlugin {
             onSave(args: arguments, flutterResult: result)
         case "delete":
             onDelete(args: arguments, flutterResult: result)
+        case "clear":
+            onClear(flutterResult: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -225,6 +230,34 @@ public class SwiftAmplifyDataStorePlugin: NSObject, FlutterPlugin {
             return
         }
         
+    }
+    
+    func onClear(flutterResult: @escaping FlutterResult) {
+        print("In Clear")
+        do {
+                try bridge.onClear() {(result) in
+                switch result {
+                case .failure(let error):
+                    print("Clear API failed. Error: \(error)")
+                    FlutterDataStoreErrorHandler.handleDataStoreError(
+                        error: error,
+                        flutterResult: flutterResult,
+                        msg: FlutterDataStoreErrorMessage.CLEAR_FAILED.rawValue
+                    )
+                case .success():
+                    print("Successfully cleared the store")
+                    flutterResult(nil)
+                }
+            }
+        }
+        catch {
+            print("An unexpected error occured: \(error)")
+            FlutterDataStoreErrorHandler.prepareError(
+                flutterResult: flutterResult,
+                msg: FlutterDataStoreErrorMessage.UNEXPECTED_ERROR.rawValue,
+                errorMap: ["UNKNOWN": "\(error.localizedDescription).\nAn unexpected error has occurred. See logs for details." ])
+            return
+        }
     }
     
     private func checkArguments(args: Any) throws -> [String: Any] {

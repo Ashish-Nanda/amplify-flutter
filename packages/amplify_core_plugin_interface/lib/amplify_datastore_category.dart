@@ -57,4 +57,8 @@ class DataStoreCategory {
         ? plugins[0].save(model, when: when)
         : throw (errorMsg);
   }
+
+  Future<void> clear() {
+    return plugins.length == 1 ? plugins[0].clear() : throw (errorMsg);
+  }
 }

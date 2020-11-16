@@ -81,6 +81,15 @@ class AmplifyDataStoreMethodChannel extends AmplifyDataStore {
     }
   }
 
+  @override
+  Future<void> clear() async {
+    try {
+      await _channel.invokeMapMethod('clear');
+    } on PlatformException catch (e) {
+      throw formatError(e);
+    }
+  }
+
   Future<void> configure({@required List<ModelSchema> modelSchemas}) async {
     return _channel.invokeMethod('configure', <String, dynamic>{
       'modelSchemas': modelSchemas.map((schema) => schema.toMap()).toList()

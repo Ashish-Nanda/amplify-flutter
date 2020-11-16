@@ -57,6 +57,10 @@ abstract class DataStorePluginInterface extends PlatformInterface {
     throw UnimplementedError('save() has not been implemented');
   }
 
+  Future<void> clear() {
+    throw UnimplementedError('clear() has not been implemented.');
+  }
+
   Future<void> configure({@required List<ModelSchema> modelSchemas}) {
     throw UnimplementedError('configure() has not been implemented.');
   }

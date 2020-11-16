@@ -146,7 +146,7 @@ class _MyAppState extends State<MyApp> {
           title: 'New Post being saved', rating: 15, created: DateTime.now());
       await Amplify.DataStore.save(post);
       Post newPost = post.copyWith(id: post.id, title: 'Updated Title');
-      await Amplify.DataStore.save(newPost, when: Post.RATING.eq(10));
+      await Amplify.DataStore.save(newPost, when: Post.RATING.eq(15));
     } catch (e) {
       print(e);
     }
@@ -157,6 +157,14 @@ class _MyAppState extends State<MyApp> {
       await Amplify.DataStore.delete(
           // replace 'id' for testing as needed
           Post(id: 'f6c4be2d-9b1b-496e-b3bf-78035f0e6191', title: 'Title'));
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  clearStore() async {
+    try {
+      Amplify.DataStore.clear();
     } catch (e) {
       print(e);
     }
@@ -185,6 +193,13 @@ class _MyAppState extends State<MyApp> {
                 child: RaisedButton(
                   onPressed: _isAmplifyConfigured ? deletePost : null,
                   child: Text('Delete Post'),
+                ),
+              ),
+              Padding(padding: EdgeInsets.all(10.0)),
+              Center(
+                child: RaisedButton(
+                  onPressed: _isAmplifyConfigured ? clearStore : null,
+                  child: Text('Clear Store'),
                 ),
               ),
               Padding(padding: EdgeInsets.all(10.0)),

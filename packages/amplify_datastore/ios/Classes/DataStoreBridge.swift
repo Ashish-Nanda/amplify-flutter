@@ -57,5 +57,9 @@ public class DataStoreBridge {
                                modelSchema: modelSchema,
                                completion: completion)
     }
+    
+    func onClear(completion: @escaping DataStoreCallback<Void>) throws {
+        try getPlugin().clear(completion: completion)
+    }
 
 }

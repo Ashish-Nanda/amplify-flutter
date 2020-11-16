@@ -55,6 +55,11 @@ class AmplifyDataStore extends DataStorePluginInterface {
   }
 
   @override
+  Future<void> clear() async {
+    _instance.clear();
+  }
+
+  @override
   Future<void> configure({List<ModelSchema> modelSchemas}) async {
     List<ModelSchema> schemas =
         modelSchemas == null ? this.modelSchemas : modelSchemas;
