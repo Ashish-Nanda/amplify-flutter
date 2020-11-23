@@ -24,6 +24,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:amplify_auth_plugin_interface/amplify_auth_plugin_interface.dart';
 import 'package:amplify_analytics_plugin_interface/analytics_plugin_interface.dart';
 import 'package:amplify_storage_plugin_interface/amplify_storage_plugin_interface.dart';
+import 'package:amplify_api_plugin_interface/amplify_api_plugin_interface.dart';
 
 part 'method_channel_amplify.dart';
 
@@ -31,6 +32,7 @@ part 'method_channel_amplify.dart';
 part 'amplify_storage_category.dart';
 part 'amplify_auth_category.dart';
 part 'amplify_analytics_category.dart';
+part 'amplify_api_category.dart';
 
 abstract class Core extends PlatformInterface {
   /// Constructs a Core platform.
@@ -58,6 +60,7 @@ abstract class Core extends PlatformInterface {
   final AuthCategory Auth = AuthCategory();
   final AnalyticsCategory Analytics = AnalyticsCategory();
   final StorageCategory Storage = StorageCategory();
+  final APICategory API = APICategory();
 
   /// Adds the configuration and return true if it was successful.
   Future<bool> configure(String version, String configuration) {
