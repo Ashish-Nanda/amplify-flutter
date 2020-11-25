@@ -1,13 +1,16 @@
 package com.amazonaws.amplify.amplify_api
 
-import android.os.Handler
-import android.os.Looper
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.annotation.NonNull
-import com.amplifyframework.core.Amplify
+import com.amazonaws.amplify.amplify_api.types.FlutterApiFailureMessage
 import com.amplifyframework.api.aws.AWSApiPlugin
+import com.amplifyframework.api.aws.GsonVariablesSerializer
+import com.amplifyframework.api.graphql.SimpleGraphQLRequest
+import com.amplifyframework.core.Amplify
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -16,6 +19,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.util.*
 
 
 /** AmplifyApiPlugin */
@@ -31,7 +35,7 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
     // Uncomment the line below once a valid backend configuration is used for API
-    // Amplify.addPlugin(AWSApiPlugin())
+    Amplify.addPlugin(AWSApiPlugin())
     Log.i("AmplifyFlutter", "Added API plugin")
   }
 
@@ -49,26 +53,98 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     when (call.method) {
       "query" ->
         onQuery(result, call.arguments as Map<String, Any>)
+      "mutate" ->
+        onMutate(result, call.arguments as Map<String, Any>)
       else -> result.notImplemented()
     }
   }
 
   fun onQuery(flutterResult: Result, request: Map<String, Any>) {
+    var document: String
+    var variables: Map<String, Any>
+
     try {
-    Log.i("AmplifyFlutter", "API.query request :$request");
-    var result: Map<String, Any> = mapOf(
-            "getTodo" to mapOf(
-                    "id" to "123",
-                    "name" to "test todo"
-            )
-    )
-      handler.post { flutterResult.success(result) }
-  } catch (error: Exception) {
+      document = request["document"] as String
+      variables = request["variables"] as Map<String, Any>
+    } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
-              "ERROR_IN_PLATFORM_CODE",
-              error)
+              FlutterApiFailureMessage.ERROR_CASTING_INPUT_IN_PLATFORM_CODE.toString(),
+              e)
+      return
+    } catch (e: Exception) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_REQUEST_MALFORMED.toString(),
+              e)
+      return
     }
+
+    Amplify.API.query(
+        SimpleGraphQLRequest<String>(
+                document,
+                variables,
+                String::class.java,
+                GsonVariablesSerializer()
+        ),
+        {
+          var result: Map<String, Any> = mapOf(
+                  "data" to it.data,
+                  "errors" to it.errors
+          )
+          handler.post { flutterResult.success(result) }
+        },
+        {
+          postFlutterError(
+                  flutterResult,
+                  FlutterApiFailureMessage.AMPLIFY_API_QUERY_FAILED.toString(),
+                  it)
+        }
+    )
+  }
+
+  fun onMutate(flutterResult: Result, request: Map<String, Any>) {
+    var document: String
+    var variables: Map<String, Any>
+
+    try {
+      document = request["document"] as String
+      variables = request["variables"] as Map<String, Any>
+    } catch (e: ClassCastException) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.ERROR_CASTING_INPUT_IN_PLATFORM_CODE.toString(),
+              e)
+      return
+    } catch (e: Exception) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_REQUEST_MALFORMED.toString(),
+              e)
+      return
+    }
+
+    Amplify.API.mutate(
+            SimpleGraphQLRequest<String>(
+                    document,
+                    variables,
+                    String::class.java,
+                    GsonVariablesSerializer()
+            ),
+            {
+              var result: Map<String, Any> = mapOf(
+                      "data" to it.data,
+                      "errors" to it.errors
+              )
+              handler.post { flutterResult.success(result) }
+            },
+            {
+              postFlutterError(
+                      flutterResult,
+                      FlutterApiFailureMessage.AMPLIFY_API_MUTATE_FAILED.toString(),
+                      it)
+            }
+    )
   }
 
   private fun postFlutterError(flutterResult: Result, msg: String, @NonNull error: Exception) {

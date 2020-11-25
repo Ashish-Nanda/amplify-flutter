@@ -40,15 +40,35 @@ class _MyAppState extends State<MyApp> {
   }
 
   query() async {
-    String graphQLDocument = '''query getTodo(\$id: ID!) { 
-          getTodo(id: \$id) { 
-            id
-            name 
-          }
-        }''';
+    String graphQLDocument = '''query MyQuery {
+      listBlogs {
+        items {
+          id
+          name
+          createdAt
+        }
+      }
+    }''';
     var result = await Amplify.API.query(
         request: GraphQLRequest(document: graphQLDocument, variables: {}));
     print('Query Result $result');
+
+    setState(() {
+      _queryResult = result.toString();
+    });
+  }
+
+  mutate() async {
+    String graphQLDocument = '''mutation MyMutation(\$name: String!) {
+      createBlog(input: {name: \$name}) {
+        id
+        name
+      }
+    }''';
+    var result = await Amplify.API.mutate(
+        request: GraphQLRequest(
+            document: graphQLDocument, variables: {"name": "Test App Blog"}));
+
     setState(() {
       _queryResult = result.toString();
     });

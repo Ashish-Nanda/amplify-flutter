@@ -41,4 +41,9 @@ class AmplifyAPI extends APIPluginInterface {
   Future<Map> query({@required GraphQLRequest request}) {
     return _instance.query(request: request);
   }
+
+  @override
+  Future<Map> mutate({@required GraphQLRequest request}) {
+    return _instance.mutate(request: request);
+  }
 }
