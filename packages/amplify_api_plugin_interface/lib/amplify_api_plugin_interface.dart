@@ -30,6 +30,6 @@ abstract class APIPluginInterface extends PlatformInterface {
   }
 
   Future<Map> mutate({@required GraphQLRequest request}) {
-    throw UnimplementedError('query() has not been implemented.');
+    throw UnimplementedError('mutate() has not been implemented.');
   }
 }
