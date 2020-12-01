@@ -34,4 +34,8 @@ class APICategory {
   Future<Map<String, dynamic>> query({@required GraphQLRequest request}) {
     return plugins[0].query(request: request);
   }
+
+  Future<Map<String, dynamic>> mutate({@required GraphQLRequest request}) {
+    return plugins[0].mutate(request: request);
+  }
 }
