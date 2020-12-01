@@ -26,13 +26,26 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
   @override
   Future<Map<String, dynamic>> query({@required GraphQLRequest request}) async {
     try {
-      print('Method Channel Input ${request.serializeAsMap()}');
       final Map<String, dynamic> result =
           await _channel.invokeMapMethod<String, dynamic>(
         'query',
         request.serializeAsMap(),
       );
-      print('Method Channel result ${result.toString()}');
+      return result;
+    } on PlatformException catch (e) {
+      throw (e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> mutate(
+      {@required GraphQLRequest request}) async {
+    try {
+      final Map<String, dynamic> result =
+          await _channel.invokeMapMethod<String, dynamic>(
+        'mutate',
+        request.serializeAsMap(),
+      );
       return result;
     } on PlatformException catch (e) {
       throw (e);
