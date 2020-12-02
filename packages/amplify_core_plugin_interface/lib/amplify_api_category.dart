@@ -38,4 +38,8 @@ class APICategory {
   Future<Map<String, dynamic>> mutate({@required GraphQLRequest request}) {
     return plugins[0].mutate(request: request);
   }
+
+  Future<SubscriptionOperation> subscribe({@required GraphQLRequest request}) {
+    return plugins[0].subscribe(request: request);
+  }
 }

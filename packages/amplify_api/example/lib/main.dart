@@ -37,6 +37,16 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isAmplifyConfigured = true;
     });
+    var result = await Amplify.API.subscribe(
+        request: GraphQLRequest(document: '''subscription MySubscription {
+        onCreateBlog {
+          id
+          name
+          createdAt
+        }
+      }''', variables: {}));
+
+    print('Subscribe result $result');
   }
 
   query() async {
