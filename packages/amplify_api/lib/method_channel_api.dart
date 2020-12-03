@@ -68,18 +68,25 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
     // Step #2. Subscribe and get back the unique id of the subscription.
     // Then filter the stream for this id.
     try {
+      print("Hello world");
+
       final String subscriptionId = await _channel.invokeMethod<String>(
         'subscribe',
         request.serializeAsMap(),
       );
 
+      print("Subscription id $subscriptionId");
+
       Stream<String> filteredStream = _allSubscriptionsStream
           .where((event) {
+            print(event);
             return event["id"] == subscriptionId;
           })
+          .map((event) => event["data"])
           .asBroadcastStream()
           .cast<String>();
 
+      print('Subscription returning');
       return SubscriptionOperation(id: subscriptionId, stream: filteredStream);
     } on PlatformException catch (e) {
       throw (e);

@@ -16,9 +16,14 @@ class ApiSubscriptionStreamHandler : EventChannel.StreamHandler {
         eventSink = null
     }
 
-    fun sendEvent(event: String) {
+    fun sendEvent(event: String, id: String) {
         handler.post {
-            eventSink?.success(event)
+            var result: Map<String, Any> = mapOf(
+                    "id" to id,
+                    "data" to event
+            )
+
+            eventSink?.success(result)
         }
     }
 }

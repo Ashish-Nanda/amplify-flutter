@@ -67,6 +67,8 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         onQuery(result, call.arguments as Map<String, Any>)
       "mutate" ->
         onMutate(result, call.arguments as Map<String, Any>)
+      "subscribe" ->
+        onSubscribe(result, call.arguments as Map<String, Any>)
       else -> result.notImplemented()
     }
   }
@@ -191,10 +193,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             ),
             {
               // Subscription established - return the internal id for the subscription
-              flutterResult.success(id)
+              handler.post { flutterResult.success(id) }
             },
             {
-              apiSubscriptionStreamHandler.sendEvent(it.data)
+              apiSubscriptionStreamHandler.sendEvent(it.data, id)
             },
             {
               this.subscriptions.remove(id)

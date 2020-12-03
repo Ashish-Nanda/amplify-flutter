@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'amplifyconfiguration.dart';
@@ -46,7 +45,11 @@ class _MyAppState extends State<MyApp> {
         }
       }''', variables: {}));
 
-    print('Subscribe result $result');
+    Stream<String> stream = result.stream;
+
+    stream.listen((event) {
+      print("Subscription event: $event");
+    }).onError((error) => print("Subscription error $error"));
   }
 
   query() async {
