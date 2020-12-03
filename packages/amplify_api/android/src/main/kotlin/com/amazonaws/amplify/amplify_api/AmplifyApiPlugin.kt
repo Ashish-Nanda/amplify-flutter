@@ -21,6 +21,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.security.InvalidParameterException
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -69,6 +70,8 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         onMutate(result, call.arguments as Map<String, Any>)
       "subscribe" ->
         onSubscribe(result, call.arguments as Map<String, Any>)
+      "cancelSubscription" ->
+        onCancelSubscription(result, call.arguments as Map<String, Any>)
       else -> result.notImplemented()
     }
   }
@@ -211,6 +214,37 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     )
 
     subscriptions.put(id, operation)
+  }
+
+  fun onCancelSubscription(flutterResult: Result, request: Map<String, Any>) {
+    var id: String
+
+    try {
+      id = request["id"] as String
+    } catch (e: ClassCastException) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.ERROR_CASTING_INPUT_IN_PLATFORM_CODE.toString(),
+              e)
+      return
+    } catch (e: Exception) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_REQUEST_MALFORMED.toString(),
+              e)
+      return
+    }
+
+    if(subscriptions.containsKey(id)) {
+      subscriptions.get(id)?.cancel()
+      subscriptions.remove(id)
+      flutterResult.success(true)
+    } else {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_API_SUBSCRIPTION_DOES_NOT_EXIST.toString(),
+              InvalidParameterException())
+    }
   }
 
   private fun postFlutterError(flutterResult: Result, msg: String, @NonNull error: Exception) {

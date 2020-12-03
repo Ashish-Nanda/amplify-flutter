@@ -25,6 +25,6 @@ class SubscriptionOperation {
   const SubscriptionOperation({@required this.id, @required this.stream});
 
   void cancel() {
-    _channel.invokeMethod('cancel', {'id': this.id});
+    _channel.invokeMethod('cancelSubscription', {'id': this.id});
   }
 }

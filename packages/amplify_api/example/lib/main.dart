@@ -50,6 +50,8 @@ class _MyAppState extends State<MyApp> {
     stream.listen((event) {
       print("Subscription event: $event");
     }).onError((error) => print("Subscription error $error"));
+
+    // result.cancel();
   }
 
   query() async {
