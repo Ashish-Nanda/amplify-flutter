@@ -73,13 +73,13 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
         request.serializeAsMap(),
       );
 
-      Stream<String> filteredStream = _allSubscriptionsStream
+      Stream<Map<String, dynamic>> filteredStream = _allSubscriptionsStream
           .where((event) {
             return event["id"] == subscriptionId;
           })
-          .map((event) => event["data"])
+          .map((event) => {"data": event["data"], "errors": event["errors"]})
           .asBroadcastStream()
-          .cast<String>();
+          .cast<Map<String, dynamic>>();
 
       return SubscriptionOperation(id: subscriptionId, stream: filteredStream);
     } on PlatformException catch (e) {

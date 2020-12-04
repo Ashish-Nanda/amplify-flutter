@@ -43,9 +43,9 @@ class _MyAppState extends State<MyApp> {
           name
           createdAt
         }
-      }''', variables: {}));
+      }'''));
 
-    Stream<String> stream = result.stream;
+    Stream<Map<String, dynamic>> stream = result.stream;
 
     stream.listen((event) {
       print("Subscription event: $event");
@@ -78,6 +78,7 @@ class _MyAppState extends State<MyApp> {
       createBlog(input: {name: \$name}) {
         id
         name
+        createdAt
       }
     }''';
     var result = await Amplify.API.mutate(
@@ -103,7 +104,7 @@ class _MyAppState extends State<MyApp> {
               Padding(padding: EdgeInsets.all(10.0)),
               Center(
                 child: RaisedButton(
-                  onPressed: _isAmplifyConfigured ? query : null,
+                  onPressed: _isAmplifyConfigured ? mutate : null,
                   child: Text('Run Query'),
                 ),
               ),

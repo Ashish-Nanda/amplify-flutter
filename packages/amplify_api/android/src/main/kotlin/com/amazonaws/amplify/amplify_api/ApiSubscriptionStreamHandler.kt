@@ -2,6 +2,7 @@ package com.amazonaws.amplify.amplify_api
 
 import android.os.Handler
 import android.os.Looper
+import com.amplifyframework.api.graphql.GraphQLResponse
 import io.flutter.plugin.common.EventChannel
 
 class ApiSubscriptionStreamHandler : EventChannel.StreamHandler {
@@ -16,11 +17,12 @@ class ApiSubscriptionStreamHandler : EventChannel.StreamHandler {
         eventSink = null
     }
 
-    fun sendEvent(event: String, id: String) {
+    fun sendEvent(data: String?, errors: List<GraphQLResponse.Error>, id: String) {
         handler.post {
-            var result: Map<String, Any> = mapOf(
+            var result: Map<String, Any?> = mapOf(
                     "id" to id,
-                    "data" to event
+                    "data" to data,
+                    "errors" to errors.map {it.message}
             )
 
             eventSink?.success(result)

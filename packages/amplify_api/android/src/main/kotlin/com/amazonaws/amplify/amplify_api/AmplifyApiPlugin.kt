@@ -10,6 +10,7 @@ import com.amazonaws.amplify.amplify_api.types.FlutterApiFailureMessage
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.api.aws.GsonVariablesSerializer
 import com.amplifyframework.api.graphql.GraphQLOperation
+import com.amplifyframework.api.graphql.GraphQLResponse
 import com.amplifyframework.api.graphql.SimpleGraphQLRequest
 import com.amplifyframework.core.Amplify
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -82,7 +83,11 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     try {
       document = request["document"] as String
-      variables = request["variables"] as Map<String, Any>
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
     } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
@@ -104,10 +109,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 String::class.java,
                 GsonVariablesSerializer()
         ),
-        {
+        { response ->
           var result: Map<String, Any> = mapOf(
-                  "data" to it.data,
-                  "errors" to it.errors
+                  "data" to response.data,
+                  "errors" to response.errors.map {it.message}
           )
           handler.post { flutterResult.success(result) }
         },
@@ -126,7 +131,11 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     try {
       document = request["document"] as String
-      variables = request["variables"] as Map<String, Any>
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
     } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
@@ -148,10 +157,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                     String::class.java,
                     GsonVariablesSerializer()
             ),
-            {
+            { response ->
               var result: Map<String, Any> = mapOf(
-                      "data" to it.data,
-                      "errors" to it.errors
+                      "data" to response.data,
+                      "errors" to response.errors.map {it.message}
               )
               handler.post { flutterResult.success(result) }
             },
@@ -171,8 +180,11 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     try {
       document = request["document"] as String
-      // TODO: This needs to be modified to support variables as an optional parameter
-      variables = request["variables"] as Map<String, Any>
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
     } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
@@ -199,7 +211,7 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
               handler.post { flutterResult.success(id) }
             },
             {
-              apiSubscriptionStreamHandler.sendEvent(it.data, id)
+              apiSubscriptionStreamHandler.sendEvent(it.data, it.errors, id)
             },
             {
               this.subscriptions.remove(id)

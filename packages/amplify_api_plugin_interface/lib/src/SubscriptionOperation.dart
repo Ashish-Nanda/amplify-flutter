@@ -20,7 +20,7 @@ const MethodChannel _channel = MethodChannel('com.amazonaws.amplify/api');
 
 class SubscriptionOperation {
   final String id;
-  final Stream<String> stream;
+  final Stream<Map<String, dynamic>> stream;
 
   const SubscriptionOperation({@required this.id, @required this.stream});
 
