@@ -17,6 +17,7 @@ library amplify_api_plugin;
 
 import 'package:amplify_api_plugin_interface/amplify_api_plugin_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:amplify_api_plugin_interface/src/SubscriptionOperation.dart';
 import './method_channel_api.dart';
 import 'package:flutter/foundation.dart';
 export 'package:amplify_api_plugin_interface/src/types.dart';
@@ -45,5 +46,10 @@ class AmplifyAPI extends APIPluginInterface {
   @override
   Future<Map> mutate({@required GraphQLRequest request}) {
     return _instance.mutate(request: request);
+  }
+
+  @override
+  Future<SubscriptionOperation> subscribe({@required GraphQLRequest request}) {
+    return _instance.subscribe(request: request);
   }
 }

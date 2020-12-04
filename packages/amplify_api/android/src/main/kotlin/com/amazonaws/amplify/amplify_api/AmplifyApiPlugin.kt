@@ -9,41 +9,56 @@ import androidx.annotation.NonNull
 import com.amazonaws.amplify.amplify_api.types.FlutterApiFailureMessage
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.api.aws.GsonVariablesSerializer
+import com.amplifyframework.api.graphql.GraphQLOperation
+import com.amplifyframework.api.graphql.GraphQLResponse
 import com.amplifyframework.api.graphql.SimpleGraphQLRequest
 import com.amplifyframework.core.Amplify
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.security.InvalidParameterException
+import java.util.*
+import kotlin.collections.HashMap
 
 
 /** AmplifyApiPlugin */
 class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
   private lateinit var channel: MethodChannel
+  private lateinit var eventchannel: EventChannel
   private lateinit var context: Context
   private var mainActivity: Activity? = null
   private val handler = Handler(Looper.getMainLooper())
+  private val subscriptions: MutableMap<String, GraphQLOperation<String>?>
+  private val apiSubscriptionStreamHandler: ApiSubscriptionStreamHandler
+
+  constructor() {
+    subscriptions = HashMap()
+    apiSubscriptionStreamHandler = ApiSubscriptionStreamHandler()
+  }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "com.amazonaws.amplify/api")
     channel.setMethodCallHandler(this)
+    eventchannel = EventChannel(flutterPluginBinding.binaryMessenger, "com.amazonaws.amplify/api_observe_events")
+    eventchannel.setStreamHandler(apiSubscriptionStreamHandler)
     context = flutterPluginBinding.applicationContext
-    // Uncomment the line below once a valid backend configuration is used for API
     Amplify.addPlugin(AWSApiPlugin())
     Log.i("AmplifyFlutter", "Added API plugin")
   }
 
   companion object {
+    // TODO: Revisit this to determine if we're keeping it and, if so, how we make it consistent with onAttachedToEngine
     @JvmStatic
     fun registerWith(registrar: Registrar) {
       val channel = MethodChannel(registrar.messenger(), "com.amazonaws.amplify/api")
-      // Uncomment the line below once a valid backend configuration is used for API
-      // Amplify.addPlugin(AWSApiPlugin())
+      Amplify.addPlugin(AWSApiPlugin())
       Log.i("AmplifyFlutter", "Added API plugin")
     }
   }
@@ -54,6 +69,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         onQuery(result, call.arguments as Map<String, Any>)
       "mutate" ->
         onMutate(result, call.arguments as Map<String, Any>)
+      "subscribe" ->
+        onSubscribe(result, call.arguments as Map<String, Any>)
+      "cancelSubscription" ->
+        onCancelSubscription(result, call.arguments as Map<String, Any>)
       else -> result.notImplemented()
     }
   }
@@ -64,7 +83,11 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     try {
       document = request["document"] as String
-      variables = request["variables"] as Map<String, Any>
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
     } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
@@ -86,10 +109,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 String::class.java,
                 GsonVariablesSerializer()
         ),
-        {
+        { response ->
           var result: Map<String, Any> = mapOf(
-                  "data" to it.data,
-                  "errors" to it.errors
+                  "data" to response.data,
+                  "errors" to response.errors.map {it.message}
           )
           handler.post { flutterResult.success(result) }
         },
@@ -108,7 +131,11 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
     try {
       document = request["document"] as String
-      variables = request["variables"] as Map<String, Any>
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
     } catch (e: ClassCastException) {
       postFlutterError(
               flutterResult,
@@ -130,10 +157,10 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                     String::class.java,
                     GsonVariablesSerializer()
             ),
-            {
+            { response ->
               var result: Map<String, Any> = mapOf(
-                      "data" to it.data,
-                      "errors" to it.errors
+                      "data" to response.data,
+                      "errors" to response.errors.map {it.message}
               )
               handler.post { flutterResult.success(result) }
             },
@@ -144,6 +171,92 @@ class AmplifyApiPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                       it)
             }
     )
+  }
+
+  fun onSubscribe(flutterResult: Result, request: Map<String, Any>) {
+    var id: String = UUID.randomUUID().toString()
+    var document: String
+    var variables: Map<String, Any>
+
+    try {
+      document = request["document"] as String
+      variables = if(request.containsKey("variables")) {
+        request["variables"] as Map<String, Any>
+      } else {
+        Collections.emptyMap()
+      }
+    } catch (e: ClassCastException) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.ERROR_CASTING_INPUT_IN_PLATFORM_CODE.toString(),
+              e)
+      return
+    } catch (e: Exception) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_REQUEST_MALFORMED.toString(),
+              e)
+      return
+    }
+
+    var operation: GraphQLOperation<String>? = Amplify.API.subscribe(
+            SimpleGraphQLRequest<String>(
+                    document,
+                    variables,
+                    String::class.java,
+                    GsonVariablesSerializer()
+            ),
+            {
+              // Subscription established - return the internal id for the subscription
+              handler.post { flutterResult.success(id) }
+            },
+            {
+              apiSubscriptionStreamHandler.sendEvent(it.data, it.errors, id)
+            },
+            {
+              this.subscriptions.remove(id)
+              postFlutterError(
+                      flutterResult,
+                      FlutterApiFailureMessage.AMPLIFY_API_SUBSCRIBE_FAILED_TO_CONNECT.toString(),
+                      it)
+            },
+            {
+              this.subscriptions.remove(id)
+            }
+    )
+
+    subscriptions.put(id, operation)
+  }
+
+  fun onCancelSubscription(flutterResult: Result, request: Map<String, Any>) {
+    var id: String
+
+    try {
+      id = request["id"] as String
+    } catch (e: ClassCastException) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.ERROR_CASTING_INPUT_IN_PLATFORM_CODE.toString(),
+              e)
+      return
+    } catch (e: Exception) {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_REQUEST_MALFORMED.toString(),
+              e)
+      return
+    }
+
+    if(subscriptions.containsKey(id)) {
+      subscriptions.get(id)?.cancel()
+      subscriptions.remove(id)
+      flutterResult.success(true)
+    } else {
+      postFlutterError(
+              flutterResult,
+              FlutterApiFailureMessage.AMPLIFY_API_SUBSCRIPTION_DOES_NOT_EXIST.toString(),
+              InvalidParameterException())
+    }
   }
 
   private fun postFlutterError(flutterResult: Result, msg: String, @NonNull error: Exception) {

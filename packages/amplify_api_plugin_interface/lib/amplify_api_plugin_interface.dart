@@ -16,6 +16,7 @@
 library amplify_api_plugin_interface;
 
 import 'dart:async';
+import 'package:amplify_api_plugin_interface/src/SubscriptionOperation.dart';
 import 'package:meta/meta.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -31,5 +32,9 @@ abstract class APIPluginInterface extends PlatformInterface {
 
   Future<Map> mutate({@required GraphQLRequest request}) {
     throw UnimplementedError('mutate() has not been implemented.');
+  }
+
+  Future<SubscriptionOperation> subscribe({@required GraphQLRequest request}) {
+    throw UnimplementedError('subscribe() has not been implemented.');
   }
 }

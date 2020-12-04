@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_core/amplify_core.dart';
 import 'amplifyconfiguration.dart';
@@ -37,6 +36,22 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isAmplifyConfigured = true;
     });
+    var result = await Amplify.API.subscribe(
+        request: GraphQLRequest(document: '''subscription MySubscription {
+        onCreateBlog {
+          id
+          name
+          createdAt
+        }
+      }'''));
+
+    Stream<Map<String, dynamic>> stream = result.stream;
+
+    stream.listen((event) {
+      print("Subscription event: $event");
+    }).onError((error) => print("Subscription error $error"));
+
+    // result.cancel();
   }
 
   query() async {
@@ -63,6 +78,7 @@ class _MyAppState extends State<MyApp> {
       createBlog(input: {name: \$name}) {
         id
         name
+        createdAt
       }
     }''';
     var result = await Amplify.API.mutate(
@@ -88,7 +104,7 @@ class _MyAppState extends State<MyApp> {
               Padding(padding: EdgeInsets.all(10.0)),
               Center(
                 child: RaisedButton(
-                  onPressed: _isAmplifyConfigured ? query : null,
+                  onPressed: _isAmplifyConfigured ? mutate : null,
                   child: Text('Run Query'),
                 ),
               ),
