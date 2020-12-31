@@ -83,13 +83,11 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
 
   @override
   Future<GraphQLSubscriptionOperation<T>> subscribe<T>(
-      {
-        @required GraphQLRequest request,
-        void Function() onEstablished,
-        @required void Function(Map<String, dynamic>) onData,
-        void Function(dynamic) onError,
-        void Function() onDone
-      }) async {
+      {@required GraphQLRequest request,
+      void Function() onEstablished,
+      @required void Function(Map<String, dynamic>) onData,
+      void Function(dynamic) onError,
+      void Function() onDone}) async {
     const _eventChannel =
         EventChannel('com.amazonaws.amplify/api_observe_events');
     _allSubscriptionsStream =
@@ -101,7 +99,6 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
         request.serializeAsMap(),
       );
 
-      // once the subscriptionId is back, we can assume that onEstablished is done.
       onEstablished();
 
       Stream<Map<String, dynamic>> filteredStream = _allSubscriptionsStream
@@ -109,7 +106,11 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
             return event["id"] == subscriptionId;
           })
           // TODO: Improve this map function
-          .map((event) => {"data": event["payload"]["data"], "errors": event["payload"]["errors"], "type": event["type"]})
+          .map((event) => {
+                "data": event["payload"]["data"],
+                "errors": event["payload"]["errors"],
+                "type": event["type"]
+              })
           .asBroadcastStream()
           .cast<Map<String, dynamic>>();
 
@@ -121,14 +122,13 @@ class AmplifyAPIMethodChannel extends AmplifyAPI {
         }
       });
       _subscription.onError(onError);
-      
+
       Function cancel = () {
         _subscription.cancel();
         _cancelSubscription(id: subscriptionId);
       };
 
-      return GraphQLSubscriptionOperation(
-          cancel: cancel);
+      return GraphQLSubscriptionOperation(cancel: cancel);
     } on PlatformException catch (e) {
       if (e.message == "AMPLIFY_API_SUBSCRIBE_FAILED_TO_CONNECT") {
         onError(e);

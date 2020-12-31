@@ -61,23 +61,21 @@ class _MyAppState extends State<MyApp> {
           createdAt
         }
       }''';
-    var operation = await Amplify.API
-        .subscribe(
-          request: GraphQLRequest(document: graphQLDocument),
-          onData: (msg) {
-            print(msg);
-          },
-          onEstablished: () {
-            print("Subscription established");
-          },
-          onError: (e) {
-            print("Error occurred");
-            print(e);
-          },
-          onDone: () {
-            print("I am so done");
-          }
-        );
+    var operation = await Amplify.API.subscribe(
+        request: GraphQLRequest(document: graphQLDocument),
+        onData: (msg) {
+          print("Subscription Message received: $msg");
+        },
+        onEstablished: () {
+          print("Subscription established");
+        },
+        onError: (e) {
+          print("Error occurred");
+          print(e);
+        },
+        onDone: () {
+          print("Subscription has been closed successfully");
+        });
 
     // Stream<Map<String, dynamic>> stream = operation.stream;
 
